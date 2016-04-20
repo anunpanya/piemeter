@@ -1,0 +1,89 @@
+<script src="https://netpie.io/microgear.js"></script>
+<script src="asset/js/raphael-2.1.4.min.js"></script>
+<script src="asset/js/justgage.js"></script>
+<style>
+	body {
+		text-align: center;
+		font-family: sans-serif;
+	}
+	#meter1, #meter2 {
+		width:600px; height:480px;
+		display: inline-block;
+	}
+	#meter3 {
+		font-size: 48px;
+		font-weight: bold;
+	}
+</style>
+
+<script>
+    var appid, appkey, appsecret;
+
+    var a = location.hash.substring(1).split(':');
+    if (a.length==3) {
+        appid = a[0];
+        appkey = a[1];
+        appsecret = a[2];
+    }
+    else {
+        alert("Please inclde APPID:APPKEY:APPSECRET as a url hash e.g. :\n\n index.html#APPID:APPKEY:APPSECRET");            
+    }
+    
+    var microgear = Microgear.create({
+        key: appkey,
+        secret: appsecret,
+        alias : "meterconsole"
+    });
+
+    microgear.on('message',function(topic,msg) {
+		if(topic.indexOf('/meterconsole/meter')>=0){
+			var m = msg.split(':');
+			meter1.refresh(m[0].trim());
+			meter2.refresh(m[1].trim());
+			document.getElementById("meter3").innerHTML = m[2].trim()+" kWh";
+		}
+    });
+    microgear.on('connected', function() {
+        microgear.subscribe('/meterconsole/#');
+        document.getElementById("data").innerHTML = "<FONT color=#00BB00>ONLINE</FONT>";
+    });
+
+    microgear.connect(appid);
+
+//----- JustGage
+
+	var meter1,meter2;
+	window.onload = function(){
+		meter1 = new JustGage({
+			id: "meter1", 
+			decimals: true,
+			value: 0, 
+			min: 0,
+			max: 50,
+			title: "Current",
+			label: "A",
+			showMinMax: false 
+		});
+		meter2 = new JustGage({
+			id: "meter2", 
+			decimals: true,
+			value: 0, 
+			min: 0,
+			max: 50,
+			title: "Power",
+			label: "kW"
+		});
+	};
+/*
+	setInterval(function(){
+		temp.refresh();
+	},2000);*/
+</script>
+
+<div id="data" align="right"><FONT COLOR=#DDDDDD>OFFLINE</FONT></div>
+<div id="data" align="center"><font style="font-size: 64px;font-weight: bold;">PIE METER</font></div>
+<div id="meter">
+	<div id="meter1"></div>
+	<div id="meter2"></div>
+	<div id="meter3">0.00 kWh</div>
+</div>
